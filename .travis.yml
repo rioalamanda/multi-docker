@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t rioalamanda/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rioalamanda/react-test npm test
+
+after_success:
+  - docker build -t rioalamanda/multi-client ./client
+  - docker build -t rioalamanda/multi-nginx ./nginx
+  - docker build -t rioalamanda/multi-server ./server
+  - docker build -t rioalamanda/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push rioalamanda/multi-client
+  - docker push rioalamanda/multi-nginx
+  - docker push rioalamanda/multi-server
+  - docker push rioalamanda/multi-worker
